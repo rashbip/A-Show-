@@ -1,25 +1,31 @@
 package com.biploborg.a_show.ui.home
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
 import com.biploborg.a_show.AppConfig
+import com.biploborg.a_show.widget.HscWidgetReceiver
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val countdown = viewModel.countdown
+    val context = LocalContext.current
     
-    // Premium Gradient Background
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primaryContainer,
@@ -38,7 +44,29 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 1. Countdown moved to top
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CountdownMiniUnit(value = countdown.days, label = "Days")
+                    CountdownMiniUnit(value = countdown.hours, label = "Hrs")
+                    CountdownMiniUnit(value = countdown.minutes, label = "Mins")
+                    CountdownMiniUnit(value = countdown.seconds, label = "Secs")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
             
             // Header
             Text(
@@ -53,9 +81,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 color = MaterialTheme.colorScheme.primary
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
-            // Lottie Animation (Placeholder URL for a study animation)
+            // Lottie Animation
             val composition by rememberLottieComposition(
                 LottieCompositionSpec.Url("https://assets9.lottiefiles.com/packages/lf20_sk5h17io.json")
             )
@@ -66,80 +94,56 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
             
             Spacer(modifier = Modifier.height(32.dp))
-            
-            // Exam Title Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = AppConfig.EXAM_NAME,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Starts on July 2, 2026",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Countdown Grid
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        CountdownUnit(value = countdown.days, label = "Days")
-                        CountdownUnit(value = countdown.hours, label = "Hours")
-                        CountdownUnit(value = countdown.minutes, label = "Mins")
-                        CountdownUnit(value = countdown.seconds, label = "Secs")
+
+            // 2. Add Countdown Widget Button
+            Button(
+                onClick = {
+                    val appWidgetManager = AppWidgetManager.getInstance(context)
+                    val myProvider = ComponentName(context, HscWidgetReceiver::class.java)
+
+                    if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                        appWidgetManager.requestPinAppWidget(myProvider, null, null)
                     }
-                }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add Countdown Widget", fontSize = 18.sp)
             }
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Motivational Quote
+            Text(
+                text = AppConfig.EXAM_NAME,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.secondary
+            )
             Text(
                 text = "\"The expert in anything was once a beginner.\"",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
         }
     }
 }
 
 @Composable
-fun CountdownUnit(value: Long, label: String) {
+fun CountdownMiniUnit(value: Long, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(64.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = value.toString().padStart(2, '0'),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = value.toString().padStart(2, '0'),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
