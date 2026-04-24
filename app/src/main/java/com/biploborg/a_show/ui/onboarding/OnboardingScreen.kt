@@ -8,30 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.biploborg.a_show.data.PreferenceManager
-import kotlinx.coroutines.launch
-
-class OnboardingViewModel(private val preferenceManager: PreferenceManager) : ViewModel() {
-    var name by mutableStateOf("")
-        private set
-
-    fun onNameChange(newName: String) {
-        name = newName
-    }
-
-    fun completeOnboarding(onComplete: () -> Unit) {
-        viewModelScope.launch {
-            if (name.isNotBlank()) {
-                preferenceManager.saveUserName(name)
-                preferenceManager.setOnboardingCompleted(true)
-                onComplete()
-            }
-        }
-    }
-}
-
 @Composable
 fun OnboardingScreen(
     viewModel: OnboardingViewModel,

@@ -2,15 +2,17 @@ package com.biploborg.a_show.ui.navigation
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import com.biploborg.a_show.data.PreferenceManager
+import com.biploborg.a_show.data.repository.PreferenceRepositoryImpl
+import com.biploborg.a_show.domain.usecase.GetCountdownUseCase
 import com.biploborg.a_show.ui.home.HomeScreen
 import com.biploborg.a_show.ui.home.HomeViewModel
 import com.biploborg.a_show.ui.onboarding.OnboardingScreen
 import com.biploborg.a_show.ui.onboarding.OnboardingViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.flow.first
 
 sealed class Screen(val route: String) {
@@ -22,12 +24,15 @@ sealed class Screen(val route: String) {
 fun AppNavigation() {
     val context = LocalContext.current
     val preferenceManager = remember { PreferenceManager(context) }
+    val preferenceRepository = remember { PreferenceRepositoryImpl(preferenceManager) }
+    val getCountdownUseCase = remember { GetCountdownUseCase() }
+    
     val navController = rememberNavController()
     
     var startDestination by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        val completed = preferenceManager.isOnboardingCompleted.first()
+        val completed = preferenceRepository.isOnboardingCompleted().first()
         startDestination = if (completed) Screen.Home.route else Screen.Onboarding.route
     }
 
@@ -37,7 +42,7 @@ fun AppNavigation() {
                 val viewModel: OnboardingViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return OnboardingViewModel(preferenceManager) as T
+                            return OnboardingViewModel(preferenceRepository) as T
                         }
                     }
                 )
@@ -54,7 +59,7 @@ fun AppNavigation() {
                 val viewModel: HomeViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return HomeViewModel(preferenceManager) as T
+                            return HomeViewModel(preferenceRepository, getCountdownUseCase) as T
                         }
                     }
                 )
